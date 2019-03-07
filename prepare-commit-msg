@@ -1,0 +1,41 @@
+#!/bin/bash
+# @author Saud
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+echo "Running prepare-commit-message hook";
+
+COMMIT_MESSAGE=$(cat $1)
+ISSUE_NUMBER=0;
+
+if grep "#" $1 ; then
+  echo "${green}[OK]${reset} Wow I'm happy that you are writing the issue number."
+  ISSUE_NUMBER=$(echo $COMMIT_MESSAGE | grep -Eo '[0-9]+$')
+  else
+  echo "${red}[FAIL]${reset} WRITE THE ISSUE NUMBER PLEASE."
+  exit 1
+fi
+
+echo "ISSUE:" $ISSUE_NUMBER
+
+# Define a function to send a LaMetric notification.
+lametric_notification() {
+  LAMETRIC_IP=$(echo $LAMETRIC_IP)
+  # Delete the previous notification message.
+  LAMETRIC_LAST_NOTIFICATION_ID=$(curl -s "http://"$LAMETRIC_IP":8080/api/v2/device/notifications" -H 'Content-Type: application/json' -u 'dev:KEY_HERE_PLEASE' | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['id'])")
+  re='^[0-9]+$'
+  if [[ $LAMETRIC_LAST_NOTIFICATION_ID =~ $re ]] ; then
+    LAMETRIC_LAST_NOTIFICATION_DELETE=$(curl -X "DELETE" "http://"$LAMETRIC_IP":8080/api/v2/device/notifications/"$LAMETRIC_LAST_NOTIFICATION_ID -H 'Content-Type: application/json' -u 'dev:KEY_HERE_PLEASE')
+    echo "LaMetric Notification ID: " $LAMETRIC_LAST_NOTIFICATION_ID " has been deleted."
+    echo $LAMETRIC_LAST_NOTIFICATION_DELETE
+  fi
+
+  sleep 1
+  curl -X "POST" "http://"$LAMETRIC_IP":8080/api/v2/device/notifications" -H 'Content-Type: application/json' -u 'dev:KEY_HERE_PLEASE' -d $'{ "icon_type": "none", "model": { "cycles": 0, "sound": { "id": "positive6", "category": "notifications", "repeat": 1 }, "frames": [ { "icon": 18955, "text": "'"$1"' '"$2"'" } ] }, "priority": "info" }'
+}
+
+GIT_USERNAME=$(git config user.name)
+
+lametric_notification ${GIT_USERNAME:0:2} $ISSUE_NUMBER
