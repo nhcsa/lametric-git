@@ -19,3 +19,7 @@ Note: This hook will will force you to write the issue number in your commit mes
 3. Edit the `prepare-commit-msg` that you just copied and write your LaMetric Key there.
 
 Happy coding!
+
+![Screenshot of LaMetric clock](https://raw.githubusercontent.com/nhcsa/lametric-git/master/screenshot.png)
+
+Screenshot of LaMetric clock showing a notification with Gitlab icon.
